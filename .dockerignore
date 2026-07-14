@@ -1,0 +1,11 @@
+node_modules
+dist
+backend/target
+backend/.mvn
+backend/.tools
+backend/data
+ai-service/.venv
+ai-service/__pycache__
+docs/*.pdf
+*.log
+hs_err_pid*.log

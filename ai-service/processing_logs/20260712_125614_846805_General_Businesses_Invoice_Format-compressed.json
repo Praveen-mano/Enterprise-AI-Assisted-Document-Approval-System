@@ -1,0 +1,16 @@
+{
+  "filename": "General_Businesses_Invoice_Format-compressed.pdf",
+  "created_at": "2026-07-12T12:56:14.846",
+  "total_duration_seconds": 10.888,
+  "modules": {
+    "ocr": 4.8828,
+    "layout": 0.0049,
+    "classification": 0.0001,
+    "risk_scoring": 0.0005,
+    "routing": 0.0,
+    "compliance": 0.0,
+    "ai_summary": 5.9997,
+    "notification": 0.0,
+    "total": 10.888
+  }
+}

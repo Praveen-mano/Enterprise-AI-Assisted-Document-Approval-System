@@ -1,0 +1,562 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Length 2641 >>
+stream
+q
+0.96 0.98 1 rg
+0 0 612 792 re f
+Q
+q
+0.08 0.13 0.20 rg
+0 742 612 50 re f
+Q
+BT
+/F2 10 Tf
+0.8 0.88 0.95 rg
+54 760 Td (AI Document Approval System) Tj
+ET
+BT
+/F1 9 Tf
+0.35 0.42 0.52 rg
+520 24 Td (1) Tj
+ET
+BT
+/F2 22 Tf
+0.05 0.12 0.20 rg
+54 710 Td (AI-Powered Dynamic Hierarchical Document) Tj
+ET
+BT
+/F2 22 Tf
+0.05 0.12 0.20 rg
+54 683 Td (Approval System) Tj
+ET
+BT
+/F2 16 Tf
+0.04 0.45 0.58 rg
+54 648 Td (Internship Project Report) Tj
+ET
+BT
+/F1 10 Tf
+0.35 0.42 0.52 rg
+54 619 Td (Generated for project demonstration and review) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 596 Td (1. Project Statement) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 570 Td (The project is an enterprise-grade AI-powered document approval system that) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 556 Td (automates document understanding, classification, prioritization, and approval) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 542 Td (routing. It reduces manual approval delays by extracting useful document) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 528 Td (information, understanding risk and financial importance, and sending the) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 514 Td (document to the correct approval role.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 492 Td (The final workflow uses four business roles: Employee, HR, Manager, and CFO.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 478 Td (The employee uploads documents. The AI service extracts and analyzes content.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 464 Td (Based on amount and importance, the system routes the document to HR, Manager,) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 450 Td (or CFO. Approvers can approve, reject, or request clarification.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 428 Td (2. Main Objective) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 402 Td (The objective is to build a cloud-native approval platform that replaces) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 388 Td (static approval workflows with dynamic AI-based routing. The system identifies) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 374 Td (useful document information, summarizes the document, calculates risk and) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 360 Td (importance, and assigns the correct approver.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 338 Td (3. Technology Stack) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 312 Td (- Frontend: React.js, TailwindCSS, Framer Motion, Recharts) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 290 Td (- Backend: Spring Boot, REST APIs, PostgreSQL, role-based authentication) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 268 Td (- AI Service: FastAPI, PaddleOCR support, LayoutLMv3 support, Google Gemini API) Tj
+ET
+endstream
+endobj
+4 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 3 0 R >>
+endobj
+5 0 obj
+<< /Length 2652 >>
+stream
+q
+0.96 0.98 1 rg
+0 0 612 792 re f
+Q
+q
+0.08 0.13 0.20 rg
+0 742 612 50 re f
+Q
+BT
+/F2 10 Tf
+0.8 0.88 0.95 rg
+54 760 Td (AI Document Approval System) Tj
+ET
+BT
+/F1 9 Tf
+0.35 0.42 0.52 rg
+520 24 Td (2) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 710 Td (- Infrastructure: Docker Compose, PostgreSQL, Redis, Kafka) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 688 Td (4. Document Upload To Approval Pipeline) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 662 Td (- Employee logs in and uploads a document.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 640 Td (- OCR Agent extracts readable text from PDF, DOCX, or image files.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 618 Td (- Layout Agent detects layout regions such as headers, tables, and signatures.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 596 Td (- Classification Agent identifies document type.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 574 Td (- Risk Scoring Agent calculates financial impact, risk, compliance, and) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 560 Td (- sensitivity.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 538 Td (- Approval Routing Agent routes the document to HR, Manager, or CFO.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 516 Td (- Compliance Agent checks missing information and policy-sensitive signals.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 494 Td (- Summary Agent creates a useful AI summary.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 472 Td (- Notification Agent prepares role and employee notifications.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 450 Td (- Approver approves, rejects, or requests clarification.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 428 Td (5. Dynamic Approval Routing) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 402 Td (The routing rule is based on INR amount after currency conversion. Below 1) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 388 Td (lakh INR routes to HR. From 1 lakh to below 10 lakh INR routes to Manager. 10) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 374 Td (lakh INR and above routes to CFO. No document is auto-approved; every document) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 360 Td (requires a human decision.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 338 Td (6. Agentic AI Layer) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 312 Td (The AI service contains multiple specialist agents: OCR Agent, Layout Agent,) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 298 Td (Classification Agent, Risk Scoring Agent, Approval Routing Agent, Compliance) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 284 Td (Agent, Summary Agent, and Notification Agent. Each agent performs one) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 270 Td (responsibility and passes useful output to the next agent.) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 2228 >>
+stream
+q
+0.96 0.98 1 rg
+0 0 612 792 re f
+Q
+q
+0.08 0.13 0.20 rg
+0 742 612 50 re f
+Q
+BT
+/F2 10 Tf
+0.8 0.88 0.95 rg
+54 760 Td (AI Document Approval System) Tj
+ET
+BT
+/F1 9 Tf
+0.35 0.42 0.52 rg
+520 24 Td (3) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 710 Td (The API returns an agent trace so approvers can see why the system classified,) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 696 Td (scored, and routed the document.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 674 Td (7. Role-Based Screens) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 648 Td (- Employee: upload documents, track status, view notifications, and read) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 634 Td (- clarification notes.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 612 Td (- HR: review low-value or HR-related documents and make decisions.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 590 Td (- Manager: review medium-value documents and monitor assigned approval queue.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 568 Td (- CFO: review high-value financial documents and critical approval requests.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 546 Td (8. Database Usage) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 520 Td (PostgreSQL stores users, roles, documents, approval status, notifications, and) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 506 Td (audit logs. Spring Boot connects to PostgreSQL through Docker Compose and) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 492 Td (seeds demo users for role-based login.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 470 Td (9. Advantages) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 444 Td (- Reduces manual routing effort.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 422 Td (- Extracts useful information from documents using AI.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 400 Td (- Routes documents dynamically based on importance.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 378 Td (- Improves transparency with agent trace.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 356 Td (- Supports human-in-the-loop decisions.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 334 Td (- Provides focused dashboards for each role.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 312 Td (10. Drawbacks) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 286 Td (- AI output depends on document quality.) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Length 2004 >>
+stream
+q
+0.96 0.98 1 rg
+0 0 612 792 re f
+Q
+q
+0.08 0.13 0.20 rg
+0 742 612 50 re f
+Q
+BT
+/F2 10 Tf
+0.8 0.88 0.95 rg
+54 760 Td (AI Document Approval System) Tj
+ET
+BT
+/F1 9 Tf
+0.35 0.42 0.52 rg
+520 24 Td (4) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 710 Td (- Scanned documents may need stronger OCR configuration.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 688 Td (- Gemini API quota limits can affect AI summary availability.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 666 Td (- Production deployment requires stronger JWT security.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 644 Td (- Exchange rates are currently configured manually.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 622 Td (- LayoutLMv3 and PaddleOCR require heavier dependencies.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 600 Td (11. Future Enhancements) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 574 Td (- Add real JWT token validation.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 552 Td (- Store uploaded files in object storage.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 530 Td (- Add email and SMS notification integration.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 508 Td (- Add approval history timeline from database.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 486 Td (- Add live Kafka event processing.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 464 Td (- Add admin policy builder and audit export reports.) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 442 Td (- Add automated currency exchange-rate API.) Tj
+ET
+BT
+/F2 13 Tf
+0.04 0.34 0.47 rg
+54 420 Td (12. Conclusion) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 394 Td (The project demonstrates an AI-first document approval system with dynamic) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 380 Td (routing, agentic AI analysis, role-based dashboards, and human approval) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 366 Td (controls. It is suitable as an enterprise prototype for intelligent approval) Tj
+ET
+BT
+/F1 10 Tf
+0.13 0.18 0.26 rg
+54 352 Td (automation and can be expanded into a production-ready approval platform.) Tj
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R /F2 2 0 R >> >> /Contents 9 0 R >>
+endobj
+11 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R 10 0 R] /Count 4 >>
+endobj
+12 0 obj
+<< /Type /Catalog /Pages 11 0 R >>
+endobj
+xref
+0 13
+0000000000 65535 f 
+0000000009 00000 n 
+0000000079 00000 n 
+0000000154 00000 n 
+0000002847 00000 n 
+0000002984 00000 n 
+0000005688 00000 n 
+0000005825 00000 n 
+0000008105 00000 n 
+0000008242 00000 n 
+0000010298 00000 n 
+0000010436 00000 n 
+0000010513 00000 n 
+trailer
+<< /Size 13 /Root 12 0 R >>
+startxref
+10564
+%%EOF

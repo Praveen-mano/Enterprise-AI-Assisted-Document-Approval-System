@@ -1,0 +1,16 @@
+{
+  "filename": "wordpress-pdf-invoice-plugin-sample.docx",
+  "created_at": "2026-07-13T06:55:21.556",
+  "total_duration_seconds": 64.1789,
+  "modules": {
+    "ocr": 0.0124,
+    "layout": 58.9297,
+    "classification": 0.0,
+    "risk_scoring": 0.0012,
+    "routing": 0.0001,
+    "compliance": 0.0,
+    "ai_summary": 5.2355,
+    "notification": 0.0,
+    "total": 64.1789
+  }
+}

@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: approval-gateway
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/approvaldb}
+    username: ${SPRING_DATASOURCE_USERNAME:approval}
+    password: ${SPRING_DATASOURCE_PASSWORD:approval}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+# Example mail configuration (optional) - set these in environment or this file for SMTP email sending
+# spring:
+#   mail:
+#     host: smtp.example.com
+#     port: 587
+#     username: your-smtp-user
+#     password: your-smtp-password
+#     properties:
+#       mail:
+#         smtp:
+#           auth: true
+#           starttls:
+#             enable: true
+
+jwt:
+  issuer: ai-approval-os
+  secret: ${JWT_SECRET:local-development-jwt-secret-change-this-2026}
+
+ai-service:
+  url: ${AI_SERVICE_URL:http://localhost:8000}
+---
+spring:
+  config:
+    activate:
+      on-profile: local-h2
+  datasource:
+    url: jdbc:h2:file:./data/approvaldb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    open-in-view: false
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+      path: /h2-console

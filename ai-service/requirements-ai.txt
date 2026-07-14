@@ -1,0 +1,6 @@
+# Optional heavy AI dependencies.
+# Install this only when you want real local OCR/LayoutLMv3 model loading.
+paddleocr==2.9.1
+paddlepaddle==2.6.2
+transformers==4.47.1
+torch==2.5.1

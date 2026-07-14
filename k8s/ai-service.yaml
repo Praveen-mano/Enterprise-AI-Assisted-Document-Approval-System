@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-approval-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ai-approval-service
+  template:
+    metadata:
+      labels:
+        app: ai-approval-service
+    spec:
+      containers:
+        - name: ai-service
+          image: ai-approval-service:latest
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-approval-service
+spec:
+  selector:
+    app: ai-approval-service
+  ports:
+    - port: 8000
+      targetPort: 8000

@@ -1,0 +1,16 @@
+{
+  "filename": "1.pdf",
+  "created_at": "2026-07-13T07:16:58.796",
+  "total_duration_seconds": 132.9542,
+  "modules": {
+    "ocr": 54.0147,
+    "layout": 73.7067,
+    "classification": 0.0002,
+    "risk_scoring": 0.0019,
+    "routing": 0.0001,
+    "compliance": 0.0,
+    "ai_summary": 5.2306,
+    "notification": 0.0,
+    "total": 132.9542
+  }
+}

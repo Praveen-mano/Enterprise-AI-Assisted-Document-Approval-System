@@ -1,0 +1,87 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+      - ai-service
+
+  backend:
+    build: ./backend
+    ports: 
+      - "8080:8080"
+    env_file:
+      - ./backend/.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/approvaldb
+      SPRING_DATASOURCE_USERNAME: approval
+      SPRING_DATASOURCE_PASSWORD: approval
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      MAIL_FROM: no-reply@approvalos.local
+      MAIL_STARTTLS: false
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      AI_SERVICE_URL: http://ai-service:8000
+    depends_on:
+    
+      - postgres
+      - redis
+      - kafka
+      - mailpit
+
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./ai-service/.env
+    volumes:
+      - ./ai-service/processing_logs:/app/processing_logs
+      - ./ai-service/rag_index:/app/rag_index
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: approvaldb
+      POSTGRES_USER: approval
+      POSTGRES_PASSWORD: approval
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+volumes:
+  postgres-data:

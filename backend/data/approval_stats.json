@@ -1,0 +1,19 @@
+{
+  "updatedAt" : "2026-07-13T13:16:21.557618700Z",
+  "totals" : {
+    "rejected" : 0,
+    "pending" : 1,
+    "approved" : 0,
+    "submitted" : 1,
+    "clarification" : 0
+  },
+  "byRole" : {
+    "Manager" : {
+      "assigned" : 1,
+      "pending" : 1,
+      "approved" : 0,
+      "rejected" : 0,
+      "clarification" : 0
+    }
+  }
+}

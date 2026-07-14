@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: approval-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: approval-gateway
+  template:
+    metadata:
+      labels:
+        app: approval-gateway
+    spec:
+      containers:
+        - name: backend
+          image: approval-gateway:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/approvaldb
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: kafka:9092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: approval-gateway
+spec:
+  selector:
+    app: approval-gateway
+  ports:
+    - port: 8080
+      targetPort: 8080

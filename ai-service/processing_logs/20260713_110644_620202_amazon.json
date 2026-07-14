@@ -1,0 +1,16 @@
+{
+  "filename": "amazon.pdf",
+  "created_at": "2026-07-13T11:06:44.620",
+  "total_duration_seconds": 124.7916,
+  "modules": {
+    "ocr": 59.8552,
+    "layout": 59.0854,
+    "classification": 0.0003,
+    "risk_scoring": 0.0013,
+    "routing": 0.0001,
+    "compliance": 0.0,
+    "ai_summary": 5.8493,
+    "notification": 0.0,
+    "total": 124.7916
+  }
+}

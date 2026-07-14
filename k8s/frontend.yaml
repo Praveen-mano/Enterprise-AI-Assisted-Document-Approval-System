@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: approval-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: approval-frontend
+  template:
+    metadata:
+      labels:
+        app: approval-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: approval-frontend:latest
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: approval-frontend
+spec:
+  selector:
+    app: approval-frontend
+  ports:
+    - port: 80
+      targetPort: 80

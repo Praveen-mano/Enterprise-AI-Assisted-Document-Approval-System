@@ -15,5 +15,7 @@ public interface ApprovalTaskRepository extends JpaRepository<ApprovalTask, Long
 
   List<ApprovalTask> findByApproverRoleAndStatusOrderByCreatedAtDesc(String approverRole, String status);
 
+  List<ApprovalTask> findByWorkflowId(Long workflowId);
+
   List<ApprovalTask> findByStatusAndDueAtBeforeAndEscalatedAtIsNull(String status, Instant dueAt);
 }

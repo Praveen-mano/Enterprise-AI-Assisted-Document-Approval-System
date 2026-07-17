@@ -73,7 +73,10 @@ public class WorkflowAutomationService {
   }
 
   public boolean canAct(Long documentId, String actorRole) {
-    return tasks.findFirstByDocumentIdAndApproverRoleAndStatusOrderByStepOrderAscIdAsc(documentId, actorRole, "PENDING").isPresent();
+    return documents.findById(documentId)
+      .filter(document -> currentApproverIncludes(document, actorRole))
+      .flatMap(document -> tasks.findFirstByDocumentIdAndApproverRoleAndStatusOrderByStepOrderAscIdAsc(documentId, actorRole, "PENDING"))
+      .isPresent();
   }
 
   @Transactional
@@ -119,8 +122,17 @@ public class WorkflowAutomationService {
     return ids.stream()
       .map(documents::findById)
       .flatMap(Optional::stream)
+      .filter(document -> currentApproverIncludes(document, role))
       .sorted(Comparator.comparing(ApprovalDocument::getCreatedAt).reversed())
       .toList();
+  }
+
+  private boolean currentApproverIncludes(ApprovalDocument document, String role) {
+    String current = normalize(document.getCurrentApproverRole()).toLowerCase(Locale.ROOT);
+    String expected = normalize(role).toLowerCase(Locale.ROOT);
+    return !expected.isBlank() && List.of(current.split(",")).stream()
+      .map(String::trim)
+      .anyMatch(expected::equals);
   }
 
   @Scheduled(fixedDelay = 60000)
@@ -149,11 +161,44 @@ public class WorkflowAutomationService {
   }
 
   private Optional<ApprovalWorkflow> findMatchingWorkflow(ApprovalDocument document) {
+    double amount = parseAmount(document.getAmountDetected());
     return workflows.findByEnabledTrueOrderByPriorityAscNameAsc().stream()
+      .filter(this::hasAnyCriterion)
       .filter(workflow -> matches(workflow.getDocumentType(), document.getDocumentType()))
       .filter(workflow -> matches(workflow.getDocumentCategory(), document.getDocumentCategory()))
       .filter(workflow -> matches(workflow.getDepartment(), document.getDepartment()))
+      .filter(workflow -> matchesAmount(workflow, amount))
       .findFirst();
+  }
+
+  private boolean hasAnyCriterion(ApprovalWorkflow workflow) {
+    return !normalize(workflow.getDocumentType()).isBlank()
+      || !normalize(workflow.getDocumentCategory()).isBlank()
+      || !normalize(workflow.getDepartment()).isBlank()
+      || workflow.getMinAmount() != null
+      || workflow.getMaxAmount() != null;
+  }
+
+  private boolean matchesAmount(ApprovalWorkflow workflow, double amount) {
+    if (workflow.getMinAmount() != null && amount < workflow.getMinAmount()) {
+      return false;
+    }
+    if (workflow.getMaxAmount() != null && amount > workflow.getMaxAmount()) {
+      return false;
+    }
+    return true;
+  }
+
+  private double parseAmount(String value) {
+    if (value == null) {
+      return 0;
+    }
+    String cleaned = value.replaceAll("[^0-9.]", "");
+    try {
+      return cleaned.isBlank() ? 0 : Double.parseDouble(cleaned);
+    } catch (NumberFormatException ignored) {
+      return 0;
+    }
   }
 
   private boolean matches(String expected, String actual) {
@@ -189,6 +234,7 @@ public class WorkflowAutomationService {
       task.setDueAt(Instant.now().plus(Math.max(1, step.getDueHours()), ChronoUnit.HOURS));
       tasks.save(task);
       notifyRole(role, "Document awaiting approval", document.getFilename() + " is ready for your workflow step.");
+      recordAudit(document, "system", "System", "WORKFLOW_STEP_ASSIGNED", "Workflow approval task assigned", "Step " + step.getStepOrder() + " assigned to " + role);
     }
     refreshCurrentApprovers(document);
   }

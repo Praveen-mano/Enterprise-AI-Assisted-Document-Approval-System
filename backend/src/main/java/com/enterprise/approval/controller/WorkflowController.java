@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -19,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/api/workflows")
 @CrossOrigin
 public class WorkflowController {
+  private static final Logger log = LoggerFactory.getLogger(WorkflowController.class);
   private static final Set<String> APPROVERS = Set.of("HR", "Manager", "CFO");
 
   private final ApprovalWorkflowRepository workflows;
@@ -31,13 +34,46 @@ public class WorkflowController {
 
   @GetMapping
   public List<ApprovalWorkflow> workflows(Authentication authentication) {
-    requireAdmin(authentication);
+    requireAdmin(authentication, "list workflows");
     return workflows.findAllByOrderByPriorityAscNameAsc();
   }
 
   @PostMapping
   public ApprovalWorkflow saveWorkflow(@RequestBody ApprovalWorkflow workflow, Authentication authentication) {
-    requireAdmin(authentication);
+    requireAdmin(authentication, workflow.getId() == null ? "create workflow" : "save workflow " + workflow.getId());
+    return persistWorkflow(workflow, authentication);
+  }
+
+  @PutMapping("/{id}")
+  public ApprovalWorkflow updateWorkflow(@PathVariable Long id, @RequestBody ApprovalWorkflow workflow, Authentication authentication) {
+    requireAdmin(authentication, "update workflow " + id);
+    workflow.setId(id);
+    return persistWorkflow(workflow, authentication);
+  }
+
+  @PatchMapping("/{id}/enabled")
+  public ApprovalWorkflow setWorkflowEnabled(@PathVariable Long id, @RequestBody Map<String, Boolean> request, Authentication authentication) {
+    requireAdmin(authentication, "set workflow enabled " + id);
+    ApprovalWorkflow workflow = workflows.findById(id)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Workflow not found"));
+    boolean enabled = Boolean.TRUE.equals(request.get("enabled"));
+    workflow.setEnabled(enabled);
+    workflow.setUpdatedAt(Instant.now());
+    log.info("Workflow {} enabled={} by user={} role={}", id, enabled, username(authentication), role(authentication));
+    return workflows.save(workflow);
+  }
+
+  @PostMapping("/{id}/enable")
+  public ApprovalWorkflow enableWorkflow(@PathVariable Long id, Authentication authentication) {
+    return setWorkflowEnabled(id, Map.of("enabled", true), authentication);
+  }
+
+  @PostMapping("/{id}/disable")
+  public ApprovalWorkflow disableWorkflow(@PathVariable Long id, Authentication authentication) {
+    return setWorkflowEnabled(id, Map.of("enabled", false), authentication);
+  }
+
+  private ApprovalWorkflow persistWorkflow(ApprovalWorkflow workflow, Authentication authentication) {
     if (normalize(workflow.getName()).isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Workflow name is required");
     }
@@ -53,6 +89,8 @@ public class WorkflowController {
     target.setDocumentType(blankToNull(workflow.getDocumentType()));
     target.setDocumentCategory(blankToNull(workflow.getDocumentCategory()));
     target.setDepartment(blankToNull(workflow.getDepartment()));
+    target.setMinAmount(workflow.getMinAmount());
+    target.setMaxAmount(workflow.getMaxAmount());
     target.setPriority(workflow.getPriority() == null ? 100 : workflow.getPriority());
     target.setUpdatedAt(Instant.now());
     target.getSteps().clear();
@@ -75,13 +113,24 @@ public class WorkflowController {
       order++;
     }
 
-    return workflows.save(target);
+    ApprovalWorkflow saved = workflows.save(target);
+    log.info("Workflow {} saved by user={} role={} enabled={}", saved.getId(), username(authentication), role(authentication), saved.getEnabled());
+    return saved;
   }
 
   @DeleteMapping("/{id}")
   public void deleteWorkflow(@PathVariable Long id, Authentication authentication) {
-    requireAdmin(authentication);
+    requireAdmin(authentication, "delete workflow " + id);
+    if (!workflows.existsById(id)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Workflow not found");
+    }
+    for (ApprovalTask task : tasks.findByWorkflowId(id)) {
+      task.setWorkflowStep(null);
+      task.setWorkflow(null);
+      tasks.save(task);
+    }
     workflows.deleteById(id);
+    log.info("Workflow {} deleted by user={} role={}", id, username(authentication), role(authentication));
   }
 
   @GetMapping("/documents/{documentId}/tasks")
@@ -115,13 +164,27 @@ public class WorkflowController {
     }
   }
 
-  private void requireAdmin(Authentication authentication) {
-    if (!"Admin".equals(role(authentication))) {
+  private void requireAdmin(Authentication authentication, String action) {
+    String normalizedRole = role(authentication);
+    boolean adminAuthority = authentication != null && authentication.getAuthorities().stream()
+      .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+    if (!"Admin".equals(normalizedRole) && !adminAuthority) {
+      log.warn(
+        "Forbidden workflow action='{}' user={} detailsRole={} authorities={}",
+        action,
+        username(authentication),
+        normalizedRole,
+        authentication == null ? List.of() : authentication.getAuthorities()
+      );
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only Admin can manage workflows");
     }
+    log.debug("Allowed workflow action='{}' user={} role={}", action, username(authentication), normalizedRole);
   }
 
   private String role(Authentication authentication) {
+    if (authentication == null) {
+      return "";
+    }
     if (authentication.getDetails() instanceof String role) {
       return normalizeRole(role);
     }
@@ -130,6 +193,10 @@ public class WorkflowController {
       .map(authority -> authority.getAuthority().replaceFirst("^ROLE_", ""))
       .map(this::normalizeRole)
       .orElse("");
+  }
+
+  private String username(Authentication authentication) {
+    return authentication == null ? "anonymous" : authentication.getName();
   }
 
   private List<String> roles(String approverRoles) {

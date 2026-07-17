@@ -13,12 +13,12 @@ public class MailConfig {
   @Bean
   @Conditional(MailEnabledCondition.class)
   JavaMailSender javaMailSender(
-    @Value("${MAIL_HOST:localhost}") String host,
-    @Value("${MAIL_PORT:1025}") int port,
+    @Value("${MAIL_HOST:smtp.gmail.com}") String host,
+    @Value("${MAIL_PORT:587}") int port,
     @Value("${MAIL_USERNAME:}") String username,
     @Value("${MAIL_PASSWORD:}") String password,
-    @Value("${MAIL_FROM:no-reply@approvalos.local}") String from,
-    @Value("${MAIL_STARTTLS:false}") boolean starttls
+    @Value("${MAIL_FROM:}") String from,
+    @Value("${MAIL_STARTTLS:true}") boolean starttls
   ) {
     JavaMailSenderImpl sender = new JavaMailSenderImpl();
     String cleanHost = host == null ? "" : host.trim();
@@ -38,7 +38,8 @@ public class MailConfig {
     properties.put("mail.smtp.auth", String.valueOf(!cleanUsername.isBlank()));
     properties.put("mail.smtp.starttls.enable", String.valueOf(starttls));
     properties.put("mail.smtp.starttls.required", String.valueOf(starttls));
-    properties.put("mail.smtp.from", from);
+    properties.put("mail.smtp.from", from == null || from.isBlank() ? cleanUsername : from);
+    properties.put("mail.smtp.ssl.trust", "smtp.gmail.com");
     properties.put("mail.smtp.connectiontimeout", "10000");
     properties.put("mail.smtp.timeout", "10000");
     properties.put("mail.smtp.writetimeout", "10000");

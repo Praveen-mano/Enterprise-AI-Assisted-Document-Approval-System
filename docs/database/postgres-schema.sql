@@ -68,6 +68,48 @@ CREATE TABLE IF NOT EXISTS approval_document_tags (
   PRIMARY KEY (document_id, tag_id)
 );
 
+CREATE TABLE IF NOT EXISTS approval_workflows (
+  id BIGSERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  document_type VARCHAR(255),
+  document_category VARCHAR(255),
+  department VARCHAR(255),
+  min_amount DOUBLE PRECISION,
+  max_amount DOUBLE PRECISION,
+  priority INTEGER NOT NULL DEFAULT 100,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS approval_workflow_steps (
+  id BIGSERIAL PRIMARY KEY,
+  workflow_id BIGINT NOT NULL REFERENCES approval_workflows(id) ON DELETE CASCADE,
+  step_order INTEGER NOT NULL DEFAULT 1,
+  approval_mode VARCHAR(80) NOT NULL DEFAULT 'SEQUENTIAL',
+  approver_roles VARCHAR(1000) NOT NULL,
+  due_hours INTEGER NOT NULL DEFAULT 24,
+  escalation_action VARCHAR(80) NOT NULL DEFAULT 'NOTIFY',
+  escalation_role VARCHAR(80),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS approval_tasks (
+  id BIGSERIAL PRIMARY KEY,
+  document_id BIGINT NOT NULL REFERENCES approval_documents(id) ON DELETE CASCADE,
+  workflow_id BIGINT REFERENCES approval_workflows(id),
+  workflow_step_id BIGINT REFERENCES approval_workflow_steps(id),
+  step_order INTEGER NOT NULL DEFAULT 1,
+  approver_role VARCHAR(80) NOT NULL,
+  status VARCHAR(80) NOT NULL DEFAULT 'PENDING',
+  decided_by VARCHAR(255),
+  decision_note VARCHAR(2000),
+  due_at TIMESTAMPTZ,
+  escalated_at TIMESTAMPTZ,
+  decided_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 CREATE TABLE IF NOT EXISTS notification_records (
   id BIGSERIAL PRIMARY KEY,
@@ -84,9 +126,15 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   actor_email VARCHAR(255) NOT NULL,
   actor_role VARCHAR(80) NOT NULL,
   action VARCHAR(120) NOT NULL,
+  document_id BIGINT,
+  document_name VARCHAR(255),
+  comment VARCHAR(2000),
   details VARCHAR(2000),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_document_id_created_at
+  ON audit_logs(document_id, created_at);
 
 -- Demo users are seeded by Spring Boot DataSeeder with BCrypt password:
 -- enterprise-ai

@@ -1,16 +1,30 @@
 {
-  "updatedAt" : "2026-07-13T13:16:21.557618700Z",
+  "updatedAt" : "2026-07-15T15:16:39.622231100Z",
   "totals" : {
     "rejected" : 0,
-    "pending" : 1,
-    "approved" : 0,
-    "submitted" : 1,
+    "pending" : 10,
+    "approved" : 3,
+    "submitted" : 13,
     "clarification" : 0
   },
   "byRole" : {
     "Manager" : {
-      "assigned" : 1,
-      "pending" : 1,
+      "assigned" : 4,
+      "pending" : 2,
+      "approved" : 2,
+      "rejected" : 0,
+      "clarification" : 0
+    },
+    "CFO" : {
+      "assigned" : 4,
+      "pending" : 3,
+      "approved" : 1,
+      "rejected" : 0,
+      "clarification" : 0
+    },
+    "HR" : {
+      "assigned" : 5,
+      "pending" : 5,
       "approved" : 0,
       "rejected" : 0,
       "clarification" : 0

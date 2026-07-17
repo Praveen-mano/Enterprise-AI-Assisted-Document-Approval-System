@@ -1,0 +1,16 @@
+{
+  "filename": "download-free-invoice-template-in-pdf.png",
+  "created_at": "2026-07-14T08:09:36.377",
+  "total_duration_seconds": 149.2961,
+  "modules": {
+    "ocr": 76.2554,
+    "layout": 66.5782,
+    "classification": 0.0001,
+    "risk_scoring": 0.0012,
+    "routing": 0.0001,
+    "compliance": 0.0,
+    "ai_summary": 6.4611,
+    "notification": 0.0,
+    "total": 149.2961
+  }
+} 

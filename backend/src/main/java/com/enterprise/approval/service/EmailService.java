@@ -17,7 +17,7 @@ public class EmailService {
 
   public EmailService(
     ObjectProvider<JavaMailSender> mailSenderProvider,
-    @Value("${MAIL_FROM:no-reply@approvalos.local}") String from
+    @Value("${MAIL_FROM:${MAIL_USERNAME:no-reply@approvalos.local}}") String from
   ) {
     this.mailSender = mailSenderProvider.getIfAvailable();
     this.from = from == null || from.isBlank() ? "no-reply@approvalos.local" : from.trim();
@@ -33,7 +33,7 @@ public class EmailService {
       return false;
     }
     if (mailSender == null) {
-      log.warn("Email skipped for {} because SMTP is not configured. Set backend/.env MAIL_HOST, MAIL_USERNAME, MAIL_PASSWORD, and MAIL_FROM.", to);
+      log.warn("Email skipped for {} because SMTP is not configured. Set backend/.env MAIL_USERNAME, MAIL_PASSWORD, and MAIL_FROM for Gmail SMTP.", to);
       return false;
     }
     try {

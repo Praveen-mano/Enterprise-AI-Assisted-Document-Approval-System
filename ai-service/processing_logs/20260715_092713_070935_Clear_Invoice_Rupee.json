@@ -1,0 +1,16 @@
+{
+  "filename": "Clear_Invoice_Rupee.pdf",
+  "created_at": "2026-07-15T09:27:13.071",
+  "total_duration_seconds": 34.6898,
+  "modules": {
+    "ocr": 0.0065,
+    "layout": 30.0592,
+    "classification": 0.0001,
+    "risk_scoring": 0.001,
+    "routing": 0.0001,
+    "compliance": 0.0,
+    "ai_summary": 4.6229,
+    "notification": 0.0,
+    "total": 34.6898
+  }
+}

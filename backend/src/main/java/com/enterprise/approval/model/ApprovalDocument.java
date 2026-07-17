@@ -1,5 +1,6 @@
 package com.enterprise.approval.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "approval_documents")
 public class ApprovalDocument {
   @Id

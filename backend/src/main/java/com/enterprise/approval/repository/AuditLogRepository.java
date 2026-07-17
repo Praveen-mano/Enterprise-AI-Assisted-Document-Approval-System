@@ -8,4 +8,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
   List<AuditLog> findByActorRole(String actorRole);
 
   List<AuditLog> findAllByOrderByCreatedAtDesc();
+
+  List<AuditLog> findByDocumentIdOrderByCreatedAtAsc(Long documentId);
 }

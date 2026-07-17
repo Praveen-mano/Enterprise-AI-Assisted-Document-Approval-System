@@ -12,6 +12,9 @@ G:\AI based Document approval System\backend\src\main\java\com\enterprise\approv
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\controller\UserController.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\controller\WorkflowController.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\ApprovalDocument.java
+G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\ApprovalTask.java
+G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\ApprovalWorkflow.java
+G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\ApprovalWorkflowStep.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\AppUser.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\AuditLog.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\DocumentCategory.java
@@ -19,6 +22,8 @@ G:\AI based Document approval System\backend\src\main\java\com\enterprise\approv
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\DocumentTag.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\model\NotificationRecord.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\repository\ApprovalDocumentRepository.java
+G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\repository\ApprovalTaskRepository.java
+G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\repository\ApprovalWorkflowRepository.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\repository\AppUserRepository.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\repository\AuditLogRepository.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\repository\DocumentCategoryRepository.java
@@ -28,3 +33,4 @@ G:\AI based Document approval System\backend\src\main\java\com\enterprise\approv
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\security\JwtAuthenticationFilter.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\security\JwtService.java
 G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\service\EmailService.java
+G:\AI based Document approval System\backend\src\main\java\com\enterprise\approval\service\WorkflowAutomationService.java

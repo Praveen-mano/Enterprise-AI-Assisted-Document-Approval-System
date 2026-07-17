@@ -34,7 +34,6 @@ const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || "http://localhos
 
 const roleEmails = {
   Employee: "employee@enterprise.ai",
-  General: "general@enterprise.ai",
   HR: "hr@enterprise.ai",
   Manager: "manager@enterprise.ai",
   CFO: "cfo@enterprise.ai",
@@ -42,12 +41,12 @@ const roleEmails = {
 };
 
 const navByRole = {
-  Employee: ["Dashboard", "Upload", "Library", "Notifications"],
-  General: ["Dashboard", "Send", "Library", "Notifications"],
-  HR: ["Dashboard", "Review", "Library", "Notifications"],
-  Manager: ["Dashboard", "Review", "Library", "Notifications"],
-  CFO: ["Dashboard", "Review", "Library", "Notifications"],
-  Admin: ["Dashboard", "Admin", "Library", "Notifications"]
+  Employee: ["Dashboard", "Upload", "Library", "History", "Notifications"],
+  General: ["Dashboard", "Send", "Library", "History", "Notifications"],
+  HR: ["Dashboard", "Review", "Library", "History", "Notifications"],
+  Manager: ["Dashboard", "Review", "Library", "History", "Notifications"],
+  CFO: ["Dashboard", "Review", "Library", "History", "Notifications"],
+  Admin: ["Dashboard", "Admin", "Library", "History", "Notifications"]
 };
 
 const processingSteps = [
@@ -66,6 +65,10 @@ function cx(...classes) {
 
 function tagNames(document) {
   return (document.tags || []).map((tag) => tag.name).filter(Boolean);
+}
+
+function isApproverRole(role) {
+  return ["HR", "Manager", "CFO"].includes(role);
 }
 
 function formatDate(value) {
@@ -270,7 +273,7 @@ function Header({ user, active, setActive, onLogout, notificationCount }) {
       </button>
       <nav className="main-nav">
         {navByRole[user.role].map((item) => {
-          const Icon = item === "Dashboard" ? LayoutDashboard : item === "Upload" ? UploadCloud : item === "Send" ? Send : item === "Review" ? FileSearch : item === "Admin" ? ShieldCheck : item === "Library" ? FolderTree : Bell;
+          const Icon = item === "Dashboard" ? LayoutDashboard : item === "Upload" ? UploadCloud : item === "Send" ? Send : item === "Review" ? FileSearch : item === "Admin" ? ShieldCheck : item === "Library" ? FolderTree : item === "History" ? Clock3 : Bell;
           return (
             <button key={item} className={cx(active === item && "active")} onClick={() => setActive(item)}>
               <Icon />
@@ -365,6 +368,7 @@ function Dashboard({ user, documents, dashboardStats, setActive, onSelect }) {
 
 function UploadScreen({ user, token, onCreated, setActive, libraryMetadata }) {
   const inputRef = useRef(null);
+  const redirectTimerRef = useRef(null);
   const [files, setFiles] = useState([]);
   const [notes, setNotes] = useState("");
   const [notificationEmail, setNotificationEmail] = useState("");
@@ -376,8 +380,26 @@ function UploadScreen({ user, token, onCreated, setActive, libraryMetadata }) {
   const [dragging, setDragging] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [progressTarget, setProgressTarget] = useState(0);
+  const [processingStatus, setProcessingStatus] = useState("Waiting to start");
   const [error, setError] = useState("");
   const [warning, setWarning] = useState("");
+
+  useEffect(() => {
+    if (!processing) return undefined;
+    const progressTimer = window.setInterval(() => {
+      setProgress((current) => {
+        if (current >= progressTarget) return current;
+        const gap = progressTarget - current;
+        const next = current + Math.max(0.35, gap * 0.08);
+        return Math.min(progressTarget, next);
+      });
+    }, 120);
+    return () => window.clearInterval(progressTimer);
+  }, [processing, progressTarget]);
+
+  useEffect(() => () => window.clearTimeout(redirectTimerRef.current), []);
 
   function addFiles(fileList) {
     const incoming = Array.from(fileList || []);
@@ -400,22 +422,34 @@ function UploadScreen({ user, token, onCreated, setActive, libraryMetadata }) {
       setError("Choose one or more PDF, DOCX, PNG, or JPG documents.");
       return;
     }
+    window.clearTimeout(redirectTimerRef.current);
     setProcessing(true);
     setStep(0);
+    setProgress(0);
+    setProgressTarget(8);
+    setProcessingStatus("Preparing upload");
     setError("");
     setWarning("");
     const timer = window.setInterval(() => setStep((current) => Math.min(current + 1, processingSteps.length - 1)), 850);
     let currentOperation = "analyzing document";
+    let completedSuccessfully = false;
     try {
       const savedDocuments = [];
-      for (const file of files) {
+      for (const [index, file] of files.entries()) {
+        const fileStart = files.length ? (index / files.length) * 100 : 0;
+        const fileShare = files.length ? 100 / files.length : 100;
         currentOperation = `analyzing ${file.name}`;
+        setProcessingStatus(`Analyzing ${file.name}`);
+        setProgressTarget(Math.min(88, fileStart + fileShare * 0.72));
         const formData = new FormData();
         formData.append("file", file);
         const aiResponse = await fetch(`${AI_API_URL}/analyze`, { method: "POST", body: formData });
         if (!aiResponse.ok) throw new Error(`AI analysis failed for ${file.name} (${aiResponse.status}).`);
         const analysis = await aiResponse.json();
         currentOperation = `saving ${file.name}`;
+        setStep(processingSteps.length - 2);
+        setProcessingStatus(`Saving ${file.name}`);
+        setProgressTarget(Math.min(94, fileStart + fileShare * 0.88));
         const saved = await backendRequest("/api/documents", token, {
           method: "POST",
           body: JSON.stringify({
@@ -441,6 +475,9 @@ function UploadScreen({ user, token, onCreated, setActive, libraryMetadata }) {
           })
         });
         currentOperation = `indexing ${file.name} for RAG`;
+        setStep(processingSteps.length - 1);
+        setProcessingStatus(`Indexing ${file.name}`);
+        setProgressTarget(Math.min(98, fileStart + fileShare * 0.96));
         const ragForm = new FormData();
         ragForm.append("file", file);
         ragForm.append("approvalDocumentId", saved.id);
@@ -453,7 +490,11 @@ function UploadScreen({ user, token, onCreated, setActive, libraryMetadata }) {
           setWarning(`Saved ${file.name}, but RAG indexing failed: ${ragError.message}`);
         }
         savedDocuments.push(saved);
+        setProgressTarget(Math.min(98, fileStart + fileShare));
       }
+      setProcessingStatus("Analysis complete");
+      setProgressTarget(100);
+      setProgress(100);
       onCreated(savedDocuments);
       setFiles([]);
       setNotes("");
@@ -463,22 +504,38 @@ function UploadScreen({ user, token, onCreated, setActive, libraryMetadata }) {
       setFolderId("");
       setTagInput("");
       setTargetRole("HR");
-      setActive("Dashboard");
+      completedSuccessfully = true;
+      redirectTimerRef.current = window.setTimeout(() => {
+        setProcessing(false);
+        setActive("Dashboard");
+      }, 500);
     } catch (uploadError) {
       setError(`${currentOperation} failed: ${uploadError.message}`);
     } finally {
       window.clearInterval(timer);
-      setProcessing(false);
+      if (!completedSuccessfully) {
+        setProcessing(false);
+      }
     }
   }
 
   if (processing) {
+    const progressPercent = Math.round(progress);
     return (
       <Panel className="processing-panel">
         <div className="processing-orbit"><Sparkles /><span /></div>
         <p className="eyebrow">Agentic analysis in progress</p>
         <h1>{processingSteps[step]}</h1>
-        <p>The document is being read, understood, scored, and assigned to a human approver.</p>
+        <p>{processingStatus}</p>
+        <div className="analysis-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progressPercent}>
+          <div className="analysis-progress-label">
+            <span>Processing document</span>
+            <strong>{progressPercent}%</strong>
+          </div>
+          <div className="analysis-progress-bar">
+            <span style={{ width: `${progressPercent}%` }} />
+          </div>
+        </div>
         <div className="processing-track">
           {processingSteps.map((item, index) => (
             <div key={item} className={cx(index < step && "done", index === step && "current")}>
@@ -619,7 +676,10 @@ function ReviewScreen({ user, token, documents, selected, setSelected, onUpdated
   const [showClarification, setShowClarification] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
-  const document = selected && documents.some((item) => item.id === selected.id) ? documents.find((item) => item.id === selected.id) : queue[0] || documents[0];
+  const selectedDocument = selected && queue.some((item) => item.id === selected.id)
+    ? queue.find((item) => item.id === selected.id)
+    : null;
+  const document = selectedDocument || queue[0] || null;
 
   useEffect(() => {
     if (document && (!selected || selected.id !== document.id)) setSelected(document);
@@ -654,14 +714,14 @@ function ReviewScreen({ user, token, documents, selected, setSelected, onUpdated
       <aside className="review-queue">
         <div className="queue-title"><div><p className="eyebrow">{user.role}</p><h2>Approval queue</h2></div><span>{queue.length}</span></div>
         <div className="queue-list">
-          {documents.map((item) => (
+          {queue.map((item) => (
             <button key={item.id} className={cx("queue-item", document?.id === item.id && "active")} onClick={() => setSelected(item)}>
               <span className="file-icon"><FileText /></span>
               <span><strong>{item.filename}</strong><small>{item.documentType} · {item.amountDetected}</small></span>
               <StatusBadge status={item.status} />
             </button>
           ))}
-          {!documents.length && <div className="queue-empty"><CheckCircle2 /><strong>Queue clear</strong><p>No documents are assigned to {user.role}.</p></div>}
+          {!queue.length && <div className="queue-empty"><CheckCircle2 /><strong>Queue clear</strong><p>No documents are assigned to {user.role}.</p></div>}
         </div>
       </aside>
 
@@ -724,14 +784,17 @@ function ReviewScreen({ user, token, documents, selected, setSelected, onUpdated
   );
 }
 
-function WorkflowBuilder({ token, workflows, onSaved }) {
+function WorkflowBuilder({ token, workflows = [], onSaved = () => {} }) {
   const emptyStep = { stepOrder: 1, approvalMode: "SEQUENTIAL", approverRoles: "HR", dueHours: 24, escalationAction: "NOTIFY", escalationRole: "Manager" };
   const [draft, setDraft] = useState({
+    id: null,
     name: "",
     enabled: true,
     documentType: "",
     documentCategory: "",
     department: "",
+    minAmount: "",
+    maxAmount: "",
     priority: 100,
     steps: [emptyStep]
   });
@@ -767,10 +830,14 @@ function WorkflowBuilder({ token, workflows, onSaved }) {
     setSaving(true);
     setError("");
     try {
-      await backendRequest("/api/workflows", token, {
-        method: "POST",
+      const endpoint = draft.id ? `/api/workflows/${draft.id}` : "/api/workflows";
+      const method = draft.id ? "PUT" : "POST";
+      await backendRequest(endpoint, token, {
+        method,
         body: JSON.stringify({
           ...draft,
+          minAmount: draft.minAmount === "" ? null : Number(draft.minAmount),
+          maxAmount: draft.maxAmount === "" ? null : Number(draft.maxAmount),
           priority: Number(draft.priority) || 100,
           steps: draft.steps.map((step, index) => ({
             ...step,
@@ -779,7 +846,7 @@ function WorkflowBuilder({ token, workflows, onSaved }) {
           }))
         })
       });
-      setDraft({ name: "", enabled: true, documentType: "", documentCategory: "", department: "", priority: 100, steps: [emptyStep] });
+      setDraft({ id: null, name: "", enabled: true, documentType: "", documentCategory: "", department: "", minAmount: "", maxAmount: "", priority: 100, steps: [emptyStep] });
       onSaved();
     } catch (saveError) {
       setError(saveError.message);
@@ -788,10 +855,61 @@ function WorkflowBuilder({ token, workflows, onSaved }) {
     }
   }
 
+  function editWorkflow(workflow) {
+    setDraft({
+      id: workflow.id,
+      name: workflow.name || "",
+      enabled: workflow.enabled !== false,
+      documentType: workflow.documentType || "",
+      documentCategory: workflow.documentCategory || "",
+      department: workflow.department || "",
+      minAmount: workflow.minAmount ?? "",
+      maxAmount: workflow.maxAmount ?? "",
+      priority: workflow.priority || 100,
+      steps: (workflow.steps?.length ? workflow.steps : [emptyStep]).map((step, index) => ({
+        stepOrder: index + 1,
+        approvalMode: step.approvalMode || "SEQUENTIAL",
+        approverRoles: step.approverRoles || "HR",
+        dueHours: step.dueHours || 24,
+        escalationAction: step.escalationAction || "NOTIFY",
+        escalationRole: step.escalationRole || "Manager"
+      }))
+    });
+  }
+
+  async function deleteWorkflow(workflowId) {
+    setSaving(true);
+    setError("");
+    try {
+      await backendRequest(`/api/workflows/${workflowId}`, token, { method: "DELETE" });
+      onSaved();
+    } catch (deleteError) {
+      setError(deleteError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleWorkflow(workflow) {
+    setSaving(true);
+    setError("");
+    try {
+      await backendRequest(`/api/workflows/${workflow.id}/enabled`, token, {
+        method: "PATCH",
+        body: JSON.stringify({ enabled: !workflow.enabled })
+      });
+      onSaved();
+    } catch (toggleError) {
+      setError(toggleError.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <Panel>
       <div className="section-heading">
-        <div><h2>Configurable workflows</h2><p>Match by document type, approval category, or department. Blank criteria act as wildcards.</p></div>
+        <div><h2>Configurable workflows</h2><p>Match by document type, approval category, department, or amount. Blank criteria act as wildcards.</p></div>
       </div>
       <div className="workflow-builder">
         <div className="workflow-form-grid">
@@ -799,6 +917,8 @@ function WorkflowBuilder({ token, workflows, onSaved }) {
           <label className="field"><span>Document type</span><input value={draft.documentType} onChange={(event) => updateDraft("documentType", event.target.value)} placeholder="Invoice, Contract..." /></label>
           <label className="field"><span>Approval category</span><select value={draft.documentCategory} onChange={(event) => updateDraft("documentCategory", event.target.value)}><option value="">Any category</option><option value="Invoice Documents">Invoice Documents</option><option value="General Documents">General Documents</option></select></label>
           <label className="field"><span>Department</span><input value={draft.department} onChange={(event) => updateDraft("department", event.target.value)} placeholder="Finance, HR..." /></label>
+          <label className="field"><span>Min amount</span><input type="number" value={draft.minAmount} onChange={(event) => updateDraft("minAmount", event.target.value)} placeholder="100000" /></label>
+          <label className="field"><span>Max amount</span><input type="number" value={draft.maxAmount} onChange={(event) => updateDraft("maxAmount", event.target.value)} placeholder="1000000" /></label>
           <label className="field"><span>Priority</span><input type="number" value={draft.priority} onChange={(event) => updateDraft("priority", event.target.value)} /></label>
         </div>
 
@@ -819,7 +939,7 @@ function WorkflowBuilder({ token, workflows, onSaved }) {
         {error && <p className="error-box">{error}</p>}
         <div className="workflow-actions">
           <button type="button" className="text-btn" onClick={addStep}><ChevronRight />Add approval level</button>
-          <button type="button" className="primary-btn" onClick={saveWorkflow} disabled={saving}><ShieldCheck />{saving ? "Saving" : "Save workflow"}</button>
+          <button type="button" className="primary-btn" onClick={saveWorkflow} disabled={saving}><ShieldCheck />{saving ? "Saving" : draft.id ? "Update workflow" : "Save workflow"}</button>
         </div>
       </div>
 
@@ -830,7 +950,13 @@ function WorkflowBuilder({ token, workflows, onSaved }) {
             <span>{workflow.documentType || "Any type"}</span>
             <span>{workflow.documentCategory || "Any category"}</span>
             <span>{workflow.department || "Any department"}</span>
+            <span>{workflow.minAmount || workflow.maxAmount ? `${workflow.minAmount ?? 0} - ${workflow.maxAmount ?? "∞"}` : "Any amount"}</span>
             <span>{(workflow.steps || []).map((step) => step.approverRoles).join(" -> ")}</span>
+            <span className="workflow-row-actions">
+              <button type="button" className="text-btn" onClick={() => editWorkflow(workflow)}>Edit</button>
+              <button type="button" className="text-btn" onClick={() => toggleWorkflow(workflow)}>{workflow.enabled ? "Disable" : "Enable"}</button>
+              <button type="button" className="text-btn" onClick={() => deleteWorkflow(workflow.id)}>Delete</button>
+            </span>
           </div>
         ))}
         {!workflows.length && <div className="empty-state"><ShieldCheck /><strong>No workflows configured</strong><p>The legacy routing policy will continue to handle documents until an admin creates a matching workflow.</p></div>}
@@ -839,7 +965,7 @@ function WorkflowBuilder({ token, workflows, onSaved }) {
   );
 }
 
-function AdminDashboard({ documents, audits, dashboardStats, workflows, token, onWorkflowSaved, onSelect }) {
+function AdminDashboard({ documents, audits, dashboardStats, workflows = [], token, onWorkflowSaved = () => {}, onSelect }) {
   const counts = dashboardStats || {
     total: 0,
     invoices: 0,
@@ -1004,7 +1130,7 @@ function DocumentLibrary({ user, token, metadata, onSelect, setActive }) {
         <label className="field">
           <span>Status</span>
           <select value={filters.status} onChange={(event) => updateFilter("status", event.target.value)}>
-            <option value="">All statuses</option>
+            <option value="">All status</option>
             <option value="PENDING">Pending</option>
             <option value="APPROVED">Approved</option>
             <option value="REJECTED">Rejected</option>
@@ -1046,7 +1172,7 @@ function DocumentLibrary({ user, token, metadata, onSelect, setActive }) {
           {libraryDocuments.map((document) => (
             <button key={document.id} onClick={() => {
               onSelect(document);
-              setActive(!["Employee", "General"].includes(user.role) ? "Review" : "Dashboard");
+              setActive(isApproverRole(user.role) ? "Review" : "Dashboard");
             }}>
               <span className="file-icon"><FileText /></span>
               <span className="library-main">
@@ -1063,6 +1189,94 @@ function DocumentLibrary({ user, token, metadata, onSelect, setActive }) {
           ))}
           {!libraryDocuments.length && !loading && <div className="empty-state"><FolderTree /><strong>No matching documents</strong><p>Adjust the filters or upload a new document with category, folder, and tags.</p></div>}
         </div>
+      </Panel>
+    </div>
+  );
+}
+
+function DocumentHistory({ documents, token }) {
+  const [selectedId, setSelectedId] = useState(documents[0]?.id || "");
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!selectedId && documents[0]?.id) {
+      setSelectedId(documents[0].id);
+    }
+  }, [documents, selectedId]);
+
+  useEffect(() => {
+    let activeRequest = true;
+    async function loadHistory() {
+      if (!selectedId) {
+        setEvents([]);
+        return;
+      }
+      setLoading(true);
+      setError("");
+      try {
+        const result = await backendRequest(`/api/audit/documents/${selectedId}`, token);
+        if (activeRequest) setEvents(result);
+      } catch (historyError) {
+        if (activeRequest) setError(historyError.message);
+      } finally {
+        if (activeRequest) setLoading(false);
+      }
+    }
+    loadHistory();
+    return () => {
+      activeRequest = false;
+    };
+  }, [selectedId, token]);
+
+  const selectedDocument = documents.find((document) => String(document.id) === String(selectedId));
+
+  return (
+    <div className="history-shell">
+      <aside className="history-documents">
+        <div className="queue-title"><div><p className="eyebrow">Document history</p><h2>Documents</h2></div><span>{documents.length}</span></div>
+        <div className="queue-list">
+          {documents.map((document) => (
+            <button key={document.id} className={cx("queue-item", String(selectedId) === String(document.id) && "active")} onClick={() => setSelectedId(document.id)}>
+              <span className="file-icon"><FileText /></span>
+              <span><strong>{document.filename}</strong><small>{document.documentType || "Document"} · {formatDate(document.createdAt)}</small></span>
+              <StatusBadge status={document.status} />
+            </button>
+          ))}
+          {!documents.length && <div className="queue-empty"><Clock3 /><strong>No documents</strong><p>History appears after documents are uploaded.</p></div>}
+        </div>
+      </aside>
+
+      <Panel className="history-panel">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Audit trail</p>
+            <h2>{selectedDocument?.filename || "Select a document"}</h2>
+            <p>Complete activity from upload through final decision.</p>
+          </div>
+          {selectedDocument && <StatusBadge status={selectedDocument.status} />}
+        </div>
+        {error && <p className="error-box">{error}</p>}
+        {loading ? (
+          <div className="page-loader"><LoaderCircle className="spin" />Loading history</div>
+        ) : (
+          <div className="timeline-list">
+            {events.map((event) => (
+              <div className="timeline-item" key={event.id}>
+                <span className="timeline-dot"><Clock3 /></span>
+                <div>
+                  <strong>{event.action}</strong>
+                  <p>{event.comment || event.details || "Activity recorded"}</p>
+                  {event.details && event.details !== event.comment && <small>{event.details}</small>}
+                  <em>{new Date(event.createdAt).toLocaleString()} · {event.actorRole} · {event.actorEmail}</em>
+                </div>
+              </div>
+            ))}
+            {!events.length && selectedDocument && <div className="empty-state"><Clock3 /><strong>No events yet</strong><p>This document does not have recorded history entries yet.</p></div>}
+            {!selectedDocument && <div className="empty-state"><FileText /><strong>Select a document</strong><p>Choose a document to view its timeline.</p></div>}
+          </div>
+        )}
       </Panel>
     </div>
   );
@@ -1141,6 +1355,7 @@ function App() {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [audits, setAudits] = useState([]);
+  const [workflows, setWorkflows] = useState([]);
   const [libraryMetadata, setLibraryMetadata] = useState({ categories: [], folders: [], tags: [] });
   const [selected, setSelected] = useState(null);
   const [assistantDocument, setAssistantDocument] = useState(null);
@@ -1159,13 +1374,15 @@ function App() {
         backendRequest("/api/library/metadata", session.token)
       ];
       if (session.user.role === "Admin") {
+        requests.push(backendRequest("/api/workflows", session.token));
         requests.push(backendRequest("/api/audit", session.token));
       }
-      const [documentData, dashboardStatsData, notificationData, metadataData, auditData = []] = await Promise.all(requests);
+      const [documentData, dashboardStatsData, notificationData, metadataData, workflowData = [], auditData = []] = await Promise.all(requests);
       setDocuments(documentData);
       setDashboardStats(dashboardStatsData);
       setNotifications(notificationData);
       setLibraryMetadata(metadataData);
+      setWorkflows(session.user.role === "Admin" ? workflowData : []);
       setAudits(auditData);
     } catch (error) {
       setLoadError(error.message);
@@ -1192,6 +1409,7 @@ function App() {
     setDashboardStats(null);
     setNotifications([]);
     setAudits([]);
+    setWorkflows([]);
     setLibraryMetadata({ categories: [], folders: [], tags: [] });
     setSelected(null);
   }
@@ -1209,10 +1427,12 @@ function App() {
       refresh();
     }} />;
   } else if (active === "Admin" && user.role === "Admin") {
-    content = <AdminDashboard documents={documents} audits={audits} dashboardStats={dashboardStats} onSelect={setSelected} />;
+    content = <AdminDashboard documents={documents} audits={audits} dashboardStats={dashboardStats} workflows={workflows} token={session.token} onWorkflowSaved={refresh} onSelect={setSelected} />;
   } else if (active === "Library") {
     content = <DocumentLibrary user={user} token={session.token} metadata={libraryMetadata} onSelect={setSelected} setActive={setActive} />;
-  } else if (active === "Review" && !["Employee", "General"].includes(user.role)) {
+  } else if (active === "History") {
+    content = <DocumentHistory documents={documents} token={session.token} />;
+  } else if (active === "Review" && isApproverRole(user.role)) {
     content = (
       <ReviewScreen
         user={user}

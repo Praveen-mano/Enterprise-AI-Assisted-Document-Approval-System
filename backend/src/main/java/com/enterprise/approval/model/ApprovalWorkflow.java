@@ -29,6 +29,12 @@ public class ApprovalWorkflow {
   @Column
   private String department;
 
+  @Column
+  private Double minAmount;
+
+  @Column
+  private Double maxAmount;
+
   @Column(nullable = false)
   private Integer priority = 100;
 
@@ -88,6 +94,22 @@ public class ApprovalWorkflow {
 
   public void setDepartment(String department) {
     this.department = department;
+  }
+
+  public Double getMinAmount() {
+    return minAmount;
+  }
+
+  public void setMinAmount(Double minAmount) {
+    this.minAmount = minAmount;
+  }
+
+  public Double getMaxAmount() {
+    return maxAmount;
+  }
+
+  public void setMaxAmount(Double maxAmount) {
+    this.maxAmount = maxAmount;
   }
 
   public Integer getPriority() {

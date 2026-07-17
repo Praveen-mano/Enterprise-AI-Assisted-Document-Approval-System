@@ -20,19 +20,12 @@ services:
       SPRING_DATASOURCE_USERNAME: approval
       SPRING_DATASOURCE_PASSWORD: approval
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      MAIL_HOST: mailpit
-      MAIL_PORT: 1025
-      MAIL_FROM: no-reply@approvalos.local
-      MAIL_STARTTLS: false
-      MAIL_USERNAME: ""
-      MAIL_PASSWORD: ""
       AI_SERVICE_URL: http://ai-service:8000
     depends_on:
     
       - postgres
       - redis
       - kafka
-      - mailpit
 
   ai-service:
     build: ./ai-service
@@ -59,12 +52,6 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-
-  mailpit:
-    image: axllent/mailpit:v1.21
-    ports:
-      - "1025:1025"
-      - "8025:8025"
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.7.1

@@ -3,6 +3,7 @@ package com.enterprise.approval.controller;
 import com.enterprise.approval.model.ApprovalDocument;
 import com.enterprise.approval.model.AuditLog;
 import com.enterprise.approval.model.NotificationRecord;
+import com.enterprise.approval.repository.AppUserRepository;
 import com.enterprise.approval.repository.ApprovalDocumentRepository;
 import com.enterprise.approval.repository.AuditLogRepository;
 import com.enterprise.approval.repository.DocumentCategoryRepository;
@@ -19,6 +20,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,6 +45,7 @@ public class DocumentController {
   private final ApprovalDocumentRepository documents;
   private final NotificationRecordRepository notifications;
   private final AuditLogRepository auditLogs;
+  private final AppUserRepository users;
   private final DocumentCategoryRepository libraryCategories;
   private final DocumentFolderRepository folders;
   private final DocumentTagRepository tags;
@@ -54,6 +58,7 @@ public class DocumentController {
     ApprovalDocumentRepository documents,
     NotificationRecordRepository notifications,
     AuditLogRepository auditLogs,
+    AppUserRepository users,
     DocumentCategoryRepository libraryCategories,
     DocumentFolderRepository folders,
     DocumentTagRepository tags,
@@ -63,6 +68,7 @@ public class DocumentController {
     this.documents = documents;
     this.notifications = notifications;
     this.auditLogs = auditLogs;
+    this.users = users;
     this.libraryCategories = libraryCategories;
     this.folders = folders;
     this.tags = tags;
@@ -81,13 +87,11 @@ public class DocumentController {
       return documents.findAllByOrderByCreatedAtDesc();
     }
     if (APPROVERS.contains(role)) {
-      return Stream.concat(
+      return uniqueDocuments(Stream.concat(
           documents.findByCurrentApproverRoleOrderByCreatedAtDesc(role).stream(),
           workflowAutomationService.documentsAssignedToRole(role).stream()
         )
-        .distinct()
-        .sorted((left, right) -> right.getCreatedAt().compareTo(left.getCreatedAt()))
-        .toList();
+        .toList());
     }
     throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Role cannot access documents");
   }
@@ -125,7 +129,9 @@ public class DocumentController {
     ApprovalDocument saved = documents.save(document);
     saved = workflowAutomationService.startWorkflowOrFallback(saved, routing.approver(), routing.mode(), routing.explanation());
     updateApprovalStats("SUBMITTED", saved.getCurrentApproverRole());
+    recordAudit(saved, authentication.getName(), senderRole, "UPLOADED", "Document uploaded", "Document entered the approval system");
     recordAudit(saved, authentication.getName(), senderRole, "SUBMITTED", "Document submitted", saved.getAgenticDecision());
+    recordAudit(saved, authentication.getName(), senderRole, "ROUTED", "Approval route assigned", "Current approver: " + saved.getCurrentApproverRole());
     if (!workflowAutomationService.hasWorkflowTasks(saved.getId())) {
       notifyRole(
         routing.approver(),
@@ -146,9 +152,9 @@ public class DocumentController {
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Document not found"));
     String actorRole = role(authentication);
     boolean workflowBacked = workflowAutomationService.hasWorkflowTasks(document.getId());
-    boolean canAct = workflowBacked
-      ? workflowAutomationService.canAct(document.getId(), actorRole)
-      : actorRole.equals(document.getCurrentApproverRole());
+    boolean workflowCanAct = workflowAutomationService.canAct(document.getId(), actorRole);
+    boolean legacyCanAct = actorRole.equals(document.getCurrentApproverRole());
+    boolean canAct = workflowCanAct || legacyCanAct;
     if (!canAct) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Document is not assigned to this role");
     }
@@ -168,15 +174,16 @@ public class DocumentController {
     document.setLastActionComment(note.isBlank() ? actionLabel(action) : note);
     document.setLastActionAt(Instant.now());
     document.setUpdatedAt(Instant.now());
-    ApprovalDocument saved = workflowBacked
+    ApprovalDocument saved = workflowBacked && workflowCanAct
       ? workflowAutomationService.decide(document, authentication.getName(), actorRole, action, note)
       : decideLegacy(document, action, note);
 
     recordAudit(saved, authentication.getName(), actorRole, action, note, actorRole + " marked the document as " + actionLabel(action));
     if (!"PENDING".equals(saved.getStatus())) {
       updateApprovalStats(saved.getStatus(), assignedRole);
-      notifySender(saved, saved.getStatus(), actorRole, note);
+      recordAudit(saved, authentication.getName(), actorRole, "STATUS_CHANGED", actionLabel(saved.getStatus()), "Document status changed to " + saved.getStatus());
     }
+    notifySender(saved, action, authentication.getName(), actorRole, note);
     return saved;
   }
 
@@ -198,12 +205,11 @@ public class DocumentController {
     } else if ("Admin".equals(actorRole)) {
       scopedDocuments = documents.findAllByOrderByCreatedAtDesc();
     } else if (APPROVERS.contains(actorRole)) {
-      scopedDocuments = Stream.concat(
+      scopedDocuments = uniqueDocuments(Stream.concat(
           documents.findByApprovalChainOrderByCreatedAtDesc(actorRole).stream(),
           workflowAutomationService.documentsAssignedToRole(actorRole).stream()
         )
-        .distinct()
-        .toList();
+        .toList());
     } else {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Role cannot access dashboard stats");
     }
@@ -231,31 +237,46 @@ public class DocumentController {
 
   private RoutingDecision routeInvoice(ApprovalDocument document) {
     double amount = parseAmount(document.getAmountDetected());
-    int risk = valueOrZero(document.getRiskScore());
-    int compliance = valueOrZero(document.getComplianceScore());
 
-    if (amount >= 1_000_000 || risk >= 75 || compliance >= 80) {
+    if (amount > 1_000_000) {
       return new RoutingDecision(
         "CFO",
         "LLM_RAG_INVOICE",
-        "Invoice routed to CFO by modular invoice policy. Signals: amount INR " + Math.round(amount)
-          + ", risk " + risk + "/100, compliance " + compliance + "/100."
+        "Invoice routed to CFO by amount policy. Amount is greater than INR 10 lakh."
       );
     }
-    if (amount >= 100_000 || risk >= 45 || compliance >= 50) {
+    if (amount >= 100_000) {
       return new RoutingDecision(
         "Manager",
         "LLM_RAG_INVOICE",
-        "Invoice routed to Manager by modular invoice policy. Signals: amount INR " + Math.round(amount)
-          + ", risk " + risk + "/100, compliance " + compliance + "/100."
+        "Invoice routed to Manager by amount policy. Amount is from INR 1 lakh to INR 10 lakh."
       );
     }
     return new RoutingDecision(
       "HR",
       "LLM_RAG_INVOICE",
-      "Invoice routed to HR by modular invoice policy. Signals: amount INR " + Math.round(amount)
-        + ", risk " + risk + "/100, compliance " + compliance + "/100."
+      "Invoice routed to HR by amount policy. Amount is below INR 1 lakh."
     );
+  }
+
+  private ApprovalDocument applyAmountRouting(ApprovalDocument document, RoutingDecision routing) {
+    document.setRoutingMode(routing.mode());
+    document.setApprovalChain(routing.approver());
+    document.setCurrentApproverRole(routing.approver());
+    document.setAgenticDecision(routing.explanation());
+    return documents.save(document);
+  }
+
+  private List<ApprovalDocument> uniqueDocuments(List<ApprovalDocument> source) {
+    Map<Long, ApprovalDocument> byId = new LinkedHashMap<>();
+    for (ApprovalDocument document : source) {
+      if (document.getId() != null) {
+        byId.putIfAbsent(document.getId(), document);
+      }
+    }
+    return new ArrayList<>(byId.values()).stream()
+      .sorted(Comparator.comparing(ApprovalDocument::getCreatedAt).reversed())
+      .toList();
   }
 
   private ApprovalDocument decideLegacy(ApprovalDocument document, String action, String note) {
@@ -367,26 +388,39 @@ public class DocumentController {
     notifications.save(notification);
   }
 
-  private void notifySender(ApprovalDocument document, String action, String actorRole, String note) {
-    String statusLabel = switch (action) {
+  private void notifySender(ApprovalDocument document, String action, String actorEmail, String actorRole, String note) {
+    String actionPhrase = switch (action) {
       case "APPROVED" -> "approved";
       case "REJECTED" -> "rejected";
       default -> "needs clarification";
     };
-    String title = "Document " + statusLabel + ": " + document.getFilename();
-    String summary = document.getSummary() == null || document.getSummary().isBlank()
-      ? "No AI summary is available for this document."
-      : document.getSummary();
-    String clarification = "CLARIFICATION".equals(action)
-      ? "\n\nClarification required:\n" + note
-      : "";
-    String message = "Hello,\n\nYour uploaded document has been " + statusLabel + ".\n\n"
-      + "Document: " + document.getFilename() + "\n"
-      + "Reviewed by: " + actorRole + "\n"
-      + "Approval route: " + document.getApprovalChain() + "\n\n"
-      + "AI summary:\n" + summary
-      + clarification
-      + "\n\nThank you for using ApprovalOS.";
+    String approverName = users.findByEmail(actorEmail)
+      .map(user -> user.getDisplayName())
+      .filter(name -> !name.isBlank())
+      .orElse(actorEmail);
+    String title = "Document " + actionPhrase + ": " + document.getFilename();
+    String comment = note == null || note.isBlank() ? "No reviewer comments provided." : note;
+    String message = String.join("\n",
+      "Hello,",
+      "",
+      "A decision has been recorded for your document.",
+      "",
+      "Document Name: " + document.getFilename(),
+      "Document Type: " + valueOrFallback(document.getDocumentType(), "Not specified"),
+      "Current Status: " + document.getStatus(),
+      "Action Performed: " + actionLabel(action),
+      "Approver: " + approverName,
+      "Approver Role: " + actorRole,
+      "Date and Time: " + Instant.now().toString(),
+      "Reviewer Comments: " + comment,
+      "",
+      "Approval Route: " + valueOrFallback(document.getApprovalChain(), "Unassigned"),
+      "",
+      "AI Summary:",
+      valueOrFallback(document.getSummary(), "No AI summary is available for this document."),
+      "",
+      "Thank you for using ApprovalOS."
+    );
 
     notifySender(document.getOwnerEmail(), document.getOwnerRole(), title, message);
     if (document.getNotificationEmail() != null
@@ -394,6 +428,10 @@ public class DocumentController {
       && !document.getNotificationEmail().equalsIgnoreCase(document.getOwnerEmail())) {
       notifySender(document.getNotificationEmail(), document.getOwnerRole(), title, message);
     }
+  }
+
+  private String valueOrFallback(String value, String fallback) {
+    return value == null || value.isBlank() ? fallback : value;
   }
 
   private void notifySender(String email, String ownerRole, String title, String message) {
